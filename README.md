@@ -31,7 +31,7 @@ python main.py
 Hoặc dùng `uvicorn` nếu project có FastAPI và `main:app`:
 
 ```powershell
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
 Biến môi trường cần đặt trước khi chạy backend (nếu dùng):
