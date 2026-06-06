@@ -1,0 +1,27 @@
+.sidebar{
+    background: #051629;
+    border-right: 1px solid #0a1b2d;
+}
+.menu{
+    display: flex;
+    flex-direction: column;
+    padding-top: 30px;
+}
+.menu-item{
+    color: #ffffff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+.menu-item:hover{
+    background: #0a1b2d;
+}
+.menu-item.active{
+    color:#162190;
+    font-weight: bold;
+    font-size: large;
+    background: #818cf8;
+}

@@ -1,0 +1,25 @@
+.card{
+    height:100%;
+    background: #17273b;
+    border: 1px solid #0e1f31;
+    border-radius: 10px;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.persona-name{
+    font-size: 24px;
+    font-weight: 700;
+
+    color: #c9d2e2;
+
+}
+.persona-description{
+    font-size: 18px;
+    
+}
+h1{
+    color: #c9d2e2;
+}
+p{
+    color: #c4cdda;
+}
