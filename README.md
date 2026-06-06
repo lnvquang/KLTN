@@ -1,4 +1,5 @@
-﻿# Hướng dẫn nhanh KLTN — Chạy demo web (Tiếng Việt)
+﻿
+## Hướng dẫn nhanh KLTN — Chạy demo web (Tiếng Việt)
 
 Tệp này hướng dẫn cách chạy demo web (frontend + backend tối thiểu) trên máy local.
 
@@ -79,4 +80,3 @@ git lfs install
 ```powershell
 git clone https://huggingface.co/quang14102004/bigfive_end
 ```
-
