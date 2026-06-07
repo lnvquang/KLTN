@@ -7,7 +7,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
+from transformers import AutoTokenizer, AutoConfig
+from train_source import XLMRobertaForMultiOutputRegression
 
 # Cấu hình thiết bị phần cứng
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -123,25 +124,29 @@ test_loader = DataLoader(ReviewDataset(test_df['text'].tolist(), test_df[traits]
 
 
 # 4. KHỞI TẠO MÔ HÌNH & ĐÓNG BĂNG CHỌN LỌC
-config = AutoConfig.from_pretrained(base_model, num_labels=5)
-model = AutoModelForSequenceClassification.from_config(config)
+# Sử dụng lại kiến trúc source để tận dụng head H->256->5
+model = XLMRobertaForMultiOutputRegression(model_name=base_model, num_outputs=5)
 
-print("Đang nạp trọng số pre-trained từ checkpoint nguồn...")
+print("Đang nạp checkpoint nguồn (state_dict)...")
 checkpoint = torch.load(checkpoint_path, map_location='cpu')
 state_dict = checkpoint.get('model_state_dict', checkpoint.get('state_dict', checkpoint))
-model.load_state_dict(state_dict, strict=False)
+res = model.load_state_dict(state_dict, strict=False)
+print('load_state_dict result:', res)
 
-# SỬA LỖI: Bước 1 - Đóng băng toàn bộ tham số của mô hình để tránh overfitting
-for param in model.parameters():
-    param.requires_grad = False
+# Freeze toàn bộ tham số rồi mở một số tham số cuối để fine-tune nhẹ
+for p in model.parameters():
+    p.requires_grad = False
 
-# Bước 2 - Mở khóa riêng lớp layer.11 của XLM-R Encoder
-for name, param in model.roberta.encoder.layer[11].named_parameters():
-    param.requires_grad = True
+# Mở khóa các tham số trong encoder layer 11 (tên tham số chứa 'layer.11')
+for name, p in model.encoder.named_parameters():
+    if 'layer.11' in name:
+        p.requires_grad = True
 
-# Bước 3 - Mở khóa lớp classification head để cập nhật trọng số mới
-for param in model.classifier.parameters():
-    param.requires_grad = True
+# Mở khóa head (intermediate + regression_head)
+for p in model.intermediate.parameters():
+    p.requires_grad = True
+for p in model.regression_head.parameters():
+    p.requires_grad = True
 
 model.to(DEVICE)
 
@@ -163,7 +168,7 @@ for epoch in range(EPOCHS):
         attention_mask = batch['attention_mask'].to(DEVICE)
         labels = batch['labels'].to(DEVICE)
         
-        outputs = model(input_ids, attention_mask=attention_mask).logits
+        outputs = model(input_ids, attention_mask=attention_mask)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -183,7 +188,7 @@ for epoch in range(EPOCHS):
             attention_mask = batch['attention_mask'].to(DEVICE)
             labels = batch['labels'].to(DEVICE)
             
-            outputs = model(input_ids, attention_mask=attention_mask).logits
+            outputs = model(input_ids, attention_mask=attention_mask)
             loss = criterion(outputs, labels)
             val_loss += loss.item()
             
